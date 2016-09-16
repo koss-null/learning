@@ -33,8 +33,19 @@ public class FirstIssue {
         }
 
         public String getPassPhrase() throws IOException {
-            System.out.println("Enter pass phrase: ");
-            input.readLine(); //to flush input
+            boolean ok = false;
+            String pass = new String();
+            while (!ok) {
+                System.out.print("Enter pass phrase: ");
+                input.readLine(); //to flush input
+                pass = input.readLine().toLowerCase();
+                if (pass.length() < 25) { ok = true; }
+            }
+            return pass;
+        }
+
+        public String getMessage() throws IOException {
+            System.out.println("Enter Message: ");
             return input.readLine().toLowerCase();
         }
     }
@@ -69,7 +80,7 @@ public class FirstIssue {
                 matrix.add(line);
             }
 
-            showTable("table is done!");
+            showTable("table is done!\n--------------");
         }
 
         private String trimDouble(String word) {
@@ -92,6 +103,10 @@ public class FirstIssue {
                 }
             }
             return ret;
+        }
+
+        public char get(char line, char column) {
+            return matrix.get(ALPHABET.indexOf(column)).get(ALPHABET.indexOf(line));
         }
 
 //        public List<List<Character>> transpose (List<List<Character>> matrix) {
@@ -120,9 +135,41 @@ public class FirstIssue {
         }
     }
 
+    public static void encrypt(Table table, String message) {
+        String encryptedMessage = new String();
+        if (message.length() == 0) {
+            System.out.println("");
+            return;
+        }
+        encryptedMessage += message.charAt(0);      //first as is
+        for (int i = 1; i < message.length(); i++) {
+            encryptedMessage += table.get(message.charAt(i - 1), message.charAt(i));
+        }
+        System.out.println("Encrypted message is: " + encryptedMessage);
+    }
+
+    public static void decrypt(Table table, String message) {
+        if (message.length() == 0) {
+            System.out.println("");
+            return;
+        }
+
+        String encryptedMessage = new String();
+        encryptedMessage += message.charAt(0);      //first as is
+        for (int i = 1; i < message.length(); i++) {
+            encryptedMessage += table.get(message.charAt(i - 1), message.charAt(i));
+        }
+
+        System.out.println("Encrypted message is: " + encryptedMessage);
+    }
+
     public static void main(String[] args) throws Exception {
         Output<Character> output = new Output<>();
         OPTIONS option = output.getOption();
         Table table = new Table(output.getPassPhrase());
+        switch (option) {
+            case ENCRYPT: encrypt(table, output.getMessage()); break;
+            case DECRYPT: decrypt(table, output.getMessage()); break;
+        }
     }
 }
