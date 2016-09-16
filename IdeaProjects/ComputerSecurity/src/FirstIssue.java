@@ -5,6 +5,7 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.util.stream.IntStream.range;
 
@@ -32,7 +33,8 @@ public class FirstIssue {
         }
 
         public String getPassPhrase() throws IOException {
-            System.out.print("Enter pass phrase: ");
+            System.out.println("Enter pass phrase: ");
+            input.readLine(); //to flush input
             return input.readLine().toLowerCase();
         }
     }
@@ -42,25 +44,29 @@ public class FirstIssue {
         List<List<Character>> matrix = new ArrayList<>();
 
         public Table(String word) {
+            word = trimDouble(word);
+            String localAlphabet = trimDouble(ALPHABET, word);
+
             {
-                List<Character> topLine = new ArrayList<>(word.length());
-                for (char c : word.toCharArray()) {
+                List<Character> topLine = new ArrayList<>(localAlphabet .length());
+                for (char c : localAlphabet .toCharArray()) {
                     topLine.add(c);
                 }
                 matrix.add(topLine);
             }
 
-            word = trimDouble(word);
-
-            for (int i = 1; i < ALPHABET.length(); i++) {
+            for (int i = 1; i < localAlphabet.length(); i++) {
                 List<Character> line = new ArrayList<>();
-                for (int j = 0; j < ALPHABET.length(); i++) {
-                    if (j == 0 || (j + i - 1) < word.length()) {
-                        line.add(ALPHABET.charAt(i));
+                for (int j = i; j < localAlphabet.length() + i; j++) {
+                    if (j == i || (j - 2) >= word.length()) {
+                        line.add(j < localAlphabet.length() ?
+                                localAlphabet.charAt(j) :
+                                localAlphabet.charAt(j - localAlphabet.length()));
                     } else {
-                        line.add(word.charAt(j + i - 1));
+                        line.add(word.charAt(j - 2));
                     }
                 }
+                matrix.add(line);
             }
 
             showTable("table is done!");
@@ -68,32 +74,43 @@ public class FirstIssue {
 
         private String trimDouble(String word) {
             boolean[] letters = new boolean[ALPHABET.length()]; //they are default false
-            return word.chars().filter(c -> {
+            String ret  = new String();
+            for (char c : word.toCharArray()) {
                 if (!letters[word.indexOf(c)]) {
                     letters[word.indexOf(c)] = true;
-                    return true;
-                }
-                return false;
-            }).toArray().toString();
-        }
-
-        public List<List<Character>> transpose (List<List<Character>> matrix) {
-            for (int i  = 0; i < matrix.size(); i++) {
-                for (int j = i + 1; j < matrix.get(i).size(); j++) {
-                    //it's a strange swap
-                    Character first = matrix.get(i).get(j);
-                    Character second = matrix.get(j).get(i);
-                    matrix.get(i).set(j, second);
-                    matrix.get(j).set(i, first);
+                    ret += c;
                 }
             }
-            return matrix;
+            return ret;
         }
+
+        private String trimDouble(String firstWord, String secondWord) {
+            String ret  = new String();
+            for (char c : firstWord.toCharArray()) {
+                if (secondWord.indexOf(c) < 0) {
+                    ret += c;
+                }
+            }
+            return ret;
+        }
+
+//        public List<List<Character>> transpose (List<List<Character>> matrix) {
+//            for (int i  = 0; i < matrix.size(); i++) {
+//                for (int j = i + 1; j < matrix.get(i).size(); j++) {
+//                    //it's a strange swap
+//                    Character first = matrix.get(i).get(j);
+//                    Character second = matrix.get(j).get(i);
+//                    matrix.get(i).set(j, second);
+//                    matrix.get(j).set(i, first);
+//                }
+//            }
+//            return matrix;
+//        }
 
         public void showTable(final String foreword) {
             System.out.println(foreword);
 
-            for (List<Character> characters : transpose(matrix)) {
+            for (List<Character> characters : matrix) {
                 for (Character symbol : characters) {
                     // toString must be implemented for T
                     System.out.print(symbol + "\t");
