@@ -1,3 +1,5 @@
+import com.sun.org.apache.bcel.internal.generic.ARRAYLENGTH;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -14,12 +16,12 @@ import static java.util.stream.IntStream.range;
  */
 public class FirstIssue {
 
-    private enum OPTIONS{
+    private enum OPTIONS {
         ENCRYPT,
         DECRYPT
     }
 
-    private static class Output<T> {
+    private static class Output {
         private BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
 
         public OPTIONS getOption() throws IOException {
@@ -27,8 +29,10 @@ public class FirstIssue {
             Character ans = (char) input.read();
 
             switch (ans) {
-                case 'y' : return OPTIONS.ENCRYPT;
-                default : return OPTIONS.DECRYPT;
+                case 'y':
+                    return OPTIONS.ENCRYPT;
+                default:
+                    return OPTIONS.DECRYPT;
             }
         }
 
@@ -39,7 +43,9 @@ public class FirstIssue {
                 System.out.print("Enter pass phrase: ");
                 input.readLine(); //to flush input
                 pass = input.readLine().toLowerCase();
-                if (pass.length() < 25) { ok = true; }
+                if (pass.length() < 25) {
+                    ok = true;
+                }
             }
             return pass;
         }
@@ -51,41 +57,58 @@ public class FirstIssue {
     }
 
     private static class Table {
-        private final String ALPHABET = "abcdefghijklmnopqrstuvwxyz";
+        private String ALPHABET = "abcdefghijklmnopqrstuvwxyz";
         List<List<Character>> matrix = new ArrayList<>();
 
         public Table(String word) {
             word = trimDouble(word);
-            String localAlphabet = trimDouble(ALPHABET, word);
-
-            {
-                List<Character> topLine = new ArrayList<>(localAlphabet .length());
-                for (char c : localAlphabet .toCharArray()) {
-                    topLine.add(c);
-                }
-                matrix.add(topLine);
+            for (char c : word.toCharArray()) {
+                if (ALPHABET.indexOf(c) < 0) ALPHABET += c;
             }
 
-            for (int i = 1; i < localAlphabet.length(); i++) {
-                List<Character> line = new ArrayList<>();
-                for (int j = i; j < localAlphabet.length() + i; j++) {
-                    if (j == i || (j - 2) >= word.length()) {
-                        line.add(j < localAlphabet.length() ?
+            int wordLength = word.length();
+
+            List<Character> line = new ArrayList<>();
+            String localAlphabet;
+            if (wordLength > 0) localAlphabet = trimDouble(ALPHABET, word.substring(word.length() - wordLength));
+            else localAlphabet = ALPHABET;
+            for (int j = 0; j < ALPHABET.length(); j++) {
+                line.add(j < wordLength ?
+                        word.substring(word.length() - wordLength).charAt(j) :
+                        (j < localAlphabet.length() ?
                                 localAlphabet.charAt(j) :
-                                localAlphabet.charAt(j - localAlphabet.length()));
-                    } else {
-                        line.add(word.charAt(j - 2));
-                    }
+                                localAlphabet.charAt(j - localAlphabet.length())));
+            }
+            matrix.add(line);
+
+            for (int i = 1; i < ALPHABET.length(); i++) {
+                List<Character> line2 = new ArrayList<>();
+                for (int j = 1; j < line.size(); j++) {
+                    line2.add(line.get(j));
                 }
+                line2.add(line.get(0));
+                line = line2;
                 matrix.add(line);
             }
 
             showTable("table is done!\n--------------");
         }
 
+        private List<Character> trimDouble(List<Character> word) {
+            boolean[] letters = new boolean[ALPHABET.length()]; //they are default false
+            List<Character> ret = new ArrayList();
+            for (char c : word) {
+                if (!letters[word.indexOf(c)]) {
+                    letters[word.indexOf(c)] = true;
+                    ret.add(c);
+                }
+            }
+            return ret;
+        }
+
         private String trimDouble(String word) {
             boolean[] letters = new boolean[ALPHABET.length()]; //they are default false
-            String ret  = new String();
+            String ret = new String();
             for (char c : word.toCharArray()) {
                 if (!letters[word.indexOf(c)]) {
                     letters[word.indexOf(c)] = true;
@@ -96,7 +119,7 @@ public class FirstIssue {
         }
 
         private String trimDouble(String firstWord, String secondWord) {
-            String ret  = new String();
+            String ret = new String();
             for (char c : firstWord.toCharArray()) {
                 if (secondWord.indexOf(c) < 0) {
                     ret += c;
@@ -106,7 +129,15 @@ public class FirstIssue {
         }
 
         public char get(char line, char column) {
-            return matrix.get(ALPHABET.indexOf(column)).get(ALPHABET.indexOf(line));
+            List<Character> currentLine = matrix.get(ALPHABET.indexOf(line));
+            int indexOfLetter = currentLine.indexOf(column);
+            return ALPHABET.charAt(indexOfLetter);
+        }
+
+        public char get2(char line, char column) {
+            List<Character> currentLine = matrix.get(ALPHABET.indexOf(line));
+            int indexOfLetter = ALPHABET.indexOf(column);
+            return currentLine.get(indexOfLetter);
         }
 
 //        public List<List<Character>> transpose (List<List<Character>> matrix) {
@@ -141,35 +172,46 @@ public class FirstIssue {
             System.out.println("");
             return;
         }
+
         encryptedMessage += message.charAt(0);      //first as is
+
         for (int i = 1; i < message.length(); i++) {
-            encryptedMessage += table.get(message.charAt(i - 1), message.charAt(i));
+            encryptedMessage += table.get(
+                    encryptedMessage.charAt(encryptedMessage.length() - 1),
+                    message.charAt(i));
         }
+
         System.out.println("Encrypted message is: " + encryptedMessage);
     }
 
     public static void decrypt(Table table, String message) {
+        String encryptedMessage = new String();
         if (message.length() == 0) {
             System.out.println("");
             return;
         }
 
-        String encryptedMessage = new String();
         encryptedMessage += message.charAt(0);      //first as is
-        for (int i = 1; i < message.length(); i++) {
-            encryptedMessage += table.get(message.charAt(i - 1), message.charAt(i));
-        }
 
-        System.out.println("Encrypted message is: " + encryptedMessage);
+        for (int i = 1; i < message.length(); i++) {
+            encryptedMessage += table.get2(
+                    message.charAt(i-1),
+                    message.charAt(i));
+        }
+        System.out.println("Decrypted message is: " + encryptedMessage);
     }
 
     public static void main(String[] args) throws Exception {
-        Output<Character> output = new Output<>();
+        Output output = new Output();
         OPTIONS option = output.getOption();
         Table table = new Table(output.getPassPhrase());
         switch (option) {
-            case ENCRYPT: encrypt(table, output.getMessage()); break;
-            case DECRYPT: decrypt(table, output.getMessage()); break;
+            case ENCRYPT:
+                encrypt(table, output.getMessage());
+                break;
+            case DECRYPT:
+                decrypt(table, output.getMessage());
+                break;
         }
     }
 }
