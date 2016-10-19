@@ -1,93 +1,57 @@
-import java.io.*;
-import java.util.Scanner;
+import javafx.util.Pair;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.util.*;
+
+/**
+ * Created by reddy on 23.09.16.
+ */
+
 
 public class kth {
-    public class Tree {
-        public class Item {
-            public int value;
-            public Item left;
-            public Item right;
-            int leftAmount;
-            int rightAmount;
+    public static int[] a;
+    public static int k;
 
-            public Item(int value) {
-                this.value = (value);
-                this.left = null;
-                this.right = null;
-                this.leftAmount = 0;
-                this.rightAmount = 0;
-            }
-
-            public void incLeftAmount() {
-                leftAmount++;
-            }
-
-            public void incRightAmount() {
-                rightAmount++;
-            }
-
-            public int getLeftAmount() {
-                return leftAmount;
-            }
-
-            public int getRightAmount() {
-                return rightAmount;
+    public static void qsort(int left, int right) {
+        int lf = left, rg = right;
+        int md = lf + (rg - lf) / 2;
+        while (lf < rg) {
+            while (a[lf] < a[md])
+                lf++;
+            while (a[rg] > a[md])
+                rg--;
+            if (lf < rg) {
+                int cash = a[lf];
+                a[lf] = a[rg];
+                a[rg] = cash;
             }
         }
 
-        public Item head;
-
-        public Tree(int value) {
-            this.head = new Item(value);
-        }
-
-        public int get(Item now, int k, int cnt) {
-            if (cnt == k) return now.value;
-            if (now.getLeftAmount() >= k) {
-                return get(now.left, k, cnt + 1);
-            } else {
-                return get(now.right, k, cnt + 1);
-            }
-        }
-
-        public void put(Item now, int a) {
-            if (a < now.value) {
-                now.incLeftAmount();
-                if (now.left == null) {
-                    now.left = new Item(a);
-                } else {
-                    put(now.left, a);
-                }
-            } else {
-                now.incRightAmount();
-                if (now.right == null) {
-                    now.right = new Item(a);
-                } else {
-                    put(now.right, a);
-                }
-            }
-
-        }
-    }
-
-    public void solve() throws Exception {
-        Scanner in = new Scanner(new File("kth.in"));
-        PrintWriter out = new PrintWriter(new FileWriter(new File("kth.out")));
-        int length = in.nextInt();
-        int k = in.nextInt();
-        int firstVal = in.nextInt();
-        Tree tree = new Tree(firstVal);
-
-        for (int i = 1; i < length; i++) {
-            tree.put(tree.head, in.nextInt());
-        }
-
-        out.println(tree.get(tree.head, k, 0));
-        out.close();
+        if (lf < right && k-1 <= lf) qsort(lf, right);
+        if (rg > left && k-1 >= left) qsort(left, rg);
     }
 
     public static void main(String[] args) throws Exception {
-        kth k = new kth();
-        k.solve();
+        Scanner in = new Scanner(new File("kth.in"));
+        PrintWriter out = new PrintWriter(new FileWriter(new File("kth.out")));
+
+        int n = in.nextInt();
+        k = in.nextInt();
+        int A = in.nextInt(), B = in.nextInt(), C = in.nextInt();
+        a = new int[n];
+        a[0] = in.nextInt();
+        a[1] = in.nextInt();
+
+        for (int i = 2; i < n; i++) {
+            a[i] = A * a[i - 2] + B * a[i - 1] + C;
+        }
+
+        qsort(0, n);
+
+        out.println(a[k - 1]);
+
+        out.close();
     }
 }
